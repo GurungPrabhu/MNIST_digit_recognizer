@@ -20,3 +20,8 @@ app.include_router(router, prefix="/api/v1/predict", tags=["Predict"])
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the MNIST Digit Prediction API"}
+
+
+@app.get("/health-check")
+def health_check():
+    return {"message": "API is running successfully"}
