@@ -3,19 +3,17 @@ import base64
 import re
 import io
 from PIL import Image
-import joblib  # or just `import joblib`
-from torchvision import transforms
+import joblib
+
+from app.utils.image_processing import (
+    crop_to_content,
+    pad_to_square,
+    resize_to_8x8,
+    thin_by_skeletonization,
+)
 
 # Load model (GridSearchCV)
 model = joblib.load("./app/model/mlp_tuned.joblib")
-
-# Use torchvision just for consistency (optional)
-transform = transforms.Compose(
-    [
-        transforms.Grayscale(num_output_channels=1),
-        transforms.Resize((28, 28)),
-    ]
-)
 
 
 def decode_base64_image(base64_string):
@@ -25,16 +23,24 @@ def decode_base64_image(base64_string):
 
 
 def predict_from_base64(base64_string):
+    """
+    Decodes a base64 image, preprocesses it, and predicts the digit using the trained model.
+    """
     try:
         image = decode_base64_image(base64_string)
-        image = transform(image)
-
+        image = image.resize((32, 32)).convert("L")
         # Convert to numpy array and reshape
-        img_array = np.array(image).astype("float32") / 255.0
-        img_array = img_array.reshape(1, -1)  # Flatten to [1, 784]
+        img_array = np.array(image).astype("float32") / 255.0 * 16
 
-        prediction = model.predict(img_array)
-        return {"predicted_digit": int(prediction[0])}
+        img_array = img_array.round().astype(int)
+        img_array = crop_to_content(img_array)
+        img_array = pad_to_square(img_array, pad_value=0)
+        img_array = resize_to_8x8(img_array)
+        img_array = img_array.reshape(1, -1)  # Flatten to [1, 64]
+        probabilities = model.predict_proba(img_array)
+        predicted_digit = np.argmax(probabilities)
+        print(predicted_digit)
+        return {"predicted_digit": int(predicted_digit)}
 
     except Exception as e:
         return {"error": str(e)}
