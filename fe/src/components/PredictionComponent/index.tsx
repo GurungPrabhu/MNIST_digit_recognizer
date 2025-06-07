@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDigitRecognizer } from "../../context/DigitRecognizerContext";
 
 interface Props {
   percent: number;
@@ -7,7 +8,9 @@ interface Props {
 const Confidence: React.FC<Props> = ({ percent }) => {
   return (
     <div className="inline-block ml-2">
-      <p className="inline-block text-green-600">{percent.toFixed(1)}%</p>
+      <p className="inline-block text-green-600">
+        {percent?.toFixed(1) || "NA"}%
+      </p>
     </div>
   );
 };
@@ -15,9 +18,8 @@ const Confidence: React.FC<Props> = ({ percent }) => {
 const PredictionComponent: React.FC = () => {
   const [trueLabelValue, setTrueLabelValue] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [predictedValue, setPredictedValue] = useState(5);
-  const [confidence, setConfidence] = useState(90);
-
+  const { result, loading } = useDigitRecognizer();
+  console.log(result);
   const validate = (value: string): string | null => {
     if (!value.trim()) return "Value is required!";
     if (isNaN(parseInt(value))) return "Value is not a number!";
@@ -46,17 +48,23 @@ const PredictionComponent: React.FC = () => {
     handleReset();
   };
 
+  if (result === null) {
+    return <></>;
+  }
   return (
     <div className="flex flex-row">
       <div className="flex-row">
         <h5 className="text-sm font-mono">Prediction</h5>
         <div className="inline-block mt-4">
-          <h1 className="text-5xl font-mono inline-block">{predictedValue}</h1>
-          <Confidence percent={confidence} />
+          <h1 className="text-5xl font-mono inline-block">
+            {result?.predicted_digit ?? "N/A"}
+          </h1>
+          <Confidence percent={result?.confidence} />
         </div>
       </div>
-      <div className="flex-column flex border-l pl-4 ml-auto">
-        <fieldset className="flex items-center space-x-4 mr-6 fieldset relative">
+      {/* <div className="flex-column flex border-l pl-4 ml-auto"> */}
+      {/* <p></p> */}
+      {/* <fieldset className="flex items-center space-x-4 mr-6 fieldset relative">
           <legend className="font-mono">Enter true label:</legend>
           <input
             type="number"
@@ -77,8 +85,8 @@ const PredictionComponent: React.FC = () => {
           onClick={handleSubmit}
         >
           Submit Feedback
-        </button>
-      </div>
+        </button> */}
+      {/* </div> */}
     </div>
   );
 };

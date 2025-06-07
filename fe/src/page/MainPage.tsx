@@ -1,6 +1,7 @@
 import React from "react";
 import { DigitRecognizerCanvas } from "../components/DigitRecognizerCanvas";
 import { PredictionComponent } from "../components/PredictionComponent";
+import { DigitRecognizerProvider } from "../context/DigitRecognizerContext";
 
 const MainPage: React.FC = () => {
   return (
@@ -9,8 +10,12 @@ const MainPage: React.FC = () => {
         <h1 className="font-bold text-2xl mt-10 m-auto font-mono">
           MNIST Digit Recognizer
         </h1>
-        <DigitRecognizerCanvas />
-        <PredictionComponent />
+        <DigitRecognizerProvider>
+          <>
+            <DigitRecognizerCanvas />
+            <PredictionComponent />
+          </>
+        </DigitRecognizerProvider>
       </div>
     </div>
   );

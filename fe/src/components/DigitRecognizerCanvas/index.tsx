@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { UndoIcon } from "../icons/UndoIcon";
 import { RedoIcon } from "../icons/RedoIcon";
 import { DeleteIcon } from "../icons/DeleteIcon";
+import { useDigitRecognizer } from "../../context/DigitRecognizerContext";
 
 const DigitRecognizerCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
+  const { predictDigit, loading } = useDigitRecognizer();
+
+  const [history, setHistory] = useState<string[]>([]);
+  const [step, setStep] = useState(-1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -16,10 +21,14 @@ const DigitRecognizerCanvas: React.FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.lineCap = "round";
-    ctx.lineCap = "round";
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 15;
     setContext(ctx);
+
+    // Initialize history with blank canvas state after setup
+    const blank = canvas.toDataURL();
+    setHistory([blank]);
+    setStep(0);
   }, []);
 
   const startDrawing = ({ nativeEvent }: any) => {
@@ -38,10 +47,74 @@ const DigitRecognizerCanvas: React.FC = () => {
     context.stroke();
   };
 
+  // Save current canvas to history when user finishes drawing
   const endDrawing = () => {
     if (!context) return;
     context.closePath();
     setIsDrawing(false);
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const dataURL = canvas.toDataURL();
+
+    // Check if dataURL is different from last history state
+    if (history[step] !== dataURL) {
+      const updatedHistory = history.slice(0, step + 1);
+      updatedHistory.push(dataURL);
+      setHistory(updatedHistory);
+      setStep(updatedHistory.length - 1);
+    }
+  };
+
+  // Undo function
+  const undo = () => {
+    if (step <= 0) return; // no more undo
+    const newStep = step - 1;
+    restoreFromHistory(newStep);
+    setStep(newStep);
+  };
+
+  // Redo function
+  const redo = () => {
+    if (step >= history.length - 1) return; // no more redo
+    const newStep = step + 1;
+    restoreFromHistory(newStep);
+    setStep(newStep);
+  };
+
+  // Restore canvas image from history
+  const restoreFromHistory = (historyStep: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.src = history[historyStep];
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+  };
+
+  // Clear canvas and reset history
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !context) return;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    // Save blank state to history
+    const blank = canvas.toDataURL();
+    setHistory([blank]);
+    setStep(0);
+  };
+
+  const handleCanvasSubmit = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+
+    const base64 = canvas.toDataURL("image/png");
+    predictDigit(base64);
   };
 
   return (
@@ -60,17 +133,52 @@ const DigitRecognizerCanvas: React.FC = () => {
         />
       </div>
       <div className="mt-4">
-        <button className="btn btn-sm btn-outline rounded-none mr-2">
+        <button
+          className="btn btn-sm btn-outline rounded-none mr-2"
+          onClick={undo}
+        >
           <UndoIcon />
         </button>
-        <button className="btn btn-sm btn-outline rounded-none mr-4">
+        <button
+          className="btn btn-sm btn-outline rounded-none mr-4"
+          onClick={redo}
+        >
           <RedoIcon />
         </button>
-        <button className="btn btn-sm btn-outline rounded-none btn-error mr-4">
+        <button
+          className="btn btn-sm btn-outline rounded-none btn-error mr-4"
+          onClick={clearCanvas}
+        >
           <DeleteIcon />
         </button>
-        <button className="btn btn-sm rounded-none float-end text-black bg-white font-mono hover:bg-gray-300">
-          Predict
+        <button
+          className="btn btn-sm rounded-none float-end text-black bg-white font-mono hover:bg-gray-300 flex items-center gap-2"
+          onClick={handleCanvasSubmit}
+          disabled={loading}
+        >
+          {loading && (
+            <svg
+              className="animate-spin h-4 w-4 text-black"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 11-8 8z"
+              />
+            </svg>
+          )}
+          {loading ? "Predicting..." : "Predict"}
         </button>
       </div>
     </div>
