@@ -39,8 +39,11 @@ def predict_from_base64(base64_string):
         img_array = img_array.reshape(1, -1)  # Flatten to [1, 64]
         probabilities = model.predict_proba(img_array)
         predicted_digit = np.argmax(probabilities)
-        print(predicted_digit)
-        return {"predicted_digit": int(predicted_digit)}
+        predicted_probability = float(probabilities[0][predicted_digit])
+        return {
+            "predicted_digit": int(predicted_digit),
+            "confidence": predicted_probability,
+        }
 
     except Exception as e:
         return {"error": str(e)}
