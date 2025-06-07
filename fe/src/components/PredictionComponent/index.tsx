@@ -1,4 +1,4 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { useDigitRecognizer } from "../../context/DigitRecognizerContext";
 
 interface Props {
@@ -16,37 +16,37 @@ const Confidence: React.FC<Props> = ({ percent }) => {
 };
 
 const PredictionComponent: React.FC = () => {
-  const [trueLabelValue, setTrueLabelValue] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const { result, loading } = useDigitRecognizer();
-  console.log(result);
-  const validate = (value: string): string | null => {
-    if (!value.trim()) return "Value is required!";
-    if (isNaN(parseInt(value))) return "Value is not a number!";
-    return null;
-  };
+  // const [trueLabelValue, setTrueLabelValue] = useState("");
+  // const [error, setError] = useState<string | null>(null);
+  const { result } = useDigitRecognizer();
+  // console.log(result);
+  // const validate = (value: string): string | null => {
+  //   if (!value.trim()) return "Value is required!";
+  //   if (isNaN(parseInt(value))) return "Value is not a number!";
+  //   return null;
+  // };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTrueLabelValue(value);
-    setError(validate(value));
-  };
+  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   setTrueLabelValue(value);
+  //   setError(validate(value));
+  // };
 
-  const handleReset = () => {
-    setTrueLabelValue("");
-    setError(null);
-  };
+  // const handleReset = () => {
+  //   setTrueLabelValue("");
+  //   setError(null);
+  // };
 
-  const handleSubmit = () => {
-    const currentError = validate(trueLabelValue);
-    if (currentError) {
-      setError(currentError);
-      return;
-    }
+  // const handleSubmit = () => {
+  //   const currentError = validate(trueLabelValue);
+  //   if (currentError) {
+  //     setError(currentError);
+  //     return;
+  //   }
 
-    console.log("Submitted value:", trueLabelValue);
-    handleReset();
-  };
+  //   console.log("Submitted value:", trueLabelValue);
+  //   handleReset();
+  // };
 
   if (result === null) {
     return <></>;
