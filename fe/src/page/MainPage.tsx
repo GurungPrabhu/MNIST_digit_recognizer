@@ -5,7 +5,7 @@ import { DigitRecognizerProvider } from "../context/DigitRecognizerContext";
 
 const MainPage: React.FC = () => {
   return (
-    <div className="w-full h-100% bg-gradient-to-br from-black to-white/1 px-10 ">
+    <div className="w-full bg-gradient-to-br from-black to-white/1 px-10 min-h-[100vh]">
       <div className="w-full max-w-[800px] mx-auto flex flex-col pb-20">
         <h1 className="font-bold text-2xl mt-10 m-auto font-mono">
           MNIST Digit Recognizer
