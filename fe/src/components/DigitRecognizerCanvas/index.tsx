@@ -8,7 +8,7 @@ const DigitRecognizerCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
-  const { predictDigit, loading } = useDigitRecognizer();
+  const { predictDigit, loading, setImage } = useDigitRecognizer();
 
   const [history, setHistory] = useState<string[]>([]);
   const [step, setStep] = useState(-1);
@@ -31,24 +31,66 @@ const DigitRecognizerCanvas: React.FC = () => {
     setStep(0);
   }, []);
 
-  const startDrawing = ({ nativeEvent }: any) => {
-    const { offsetX, offsetY } = nativeEvent;
+  const startDrawing = (
+    event:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    event.preventDefault(); // Prevent scrolling on touch devices
+    let offsetX: number, offsetY: number;
+
+    if ("touches" in event) {
+      // Touch event
+      const touch = event.touches[0];
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+    } else {
+      // Mouse event
+      offsetX = event.nativeEvent.offsetX;
+      offsetY = event.nativeEvent.offsetY;
+    }
+
     if (!context) return;
     context.beginPath();
     context.moveTo(offsetX, offsetY);
     setIsDrawing(true);
   };
 
-  const draw = ({ nativeEvent }: any) => {
+  const draw = (
+    event:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    event.preventDefault();
     if (!isDrawing) return;
-    const { offsetX, offsetY } = nativeEvent;
+
+    let offsetX: number, offsetY: number;
+
+    if ("touches" in event) {
+      const touch = event.touches[0];
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+    } else {
+      offsetX = event.nativeEvent.offsetX;
+      offsetY = event.nativeEvent.offsetY;
+    }
+
     if (!context) return;
     context.lineTo(offsetX, offsetY);
     context.stroke();
   };
 
   // Save current canvas to history when user finishes drawing
-  const endDrawing = () => {
+  const endDrawing = (
+    event:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    event.preventDefault();
     if (!context) return;
     context.closePath();
     setIsDrawing(false);
@@ -58,7 +100,6 @@ const DigitRecognizerCanvas: React.FC = () => {
 
     const dataURL = canvas.toDataURL();
 
-    // Check if dataURL is different from last history state
     if (history[step] !== dataURL) {
       const updatedHistory = history.slice(0, step + 1);
       updatedHistory.push(dataURL);
@@ -112,8 +153,8 @@ const DigitRecognizerCanvas: React.FC = () => {
   const handleCanvasSubmit = () => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
-
     const base64 = canvas.toDataURL("image/png");
+    setImage(base64);
     predictDigit(base64);
   };
 
@@ -122,7 +163,7 @@ const DigitRecognizerCanvas: React.FC = () => {
       <p className="font-mono my-2">
         Draw a digit (0-9) below and click Predict.
       </p>
-      <div className="w-full h-[500px] border-2 border-gray-300 rounded-md shadow-md relative bg-black rounded-none">
+      <div className="w-full h-[500px] border-2 border-gray-300 shadow-md relative bg-black rounded-none">
         <canvas
           ref={canvasRef}
           className="w-full h-full cursor-crosshair"
@@ -130,6 +171,10 @@ const DigitRecognizerCanvas: React.FC = () => {
           onMouseMove={draw}
           onMouseUp={endDrawing}
           onMouseLeave={endDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={endDrawing}
+          onTouchCancel={endDrawing}
         />
       </div>
       <div className="mt-4">
@@ -154,7 +199,7 @@ const DigitRecognizerCanvas: React.FC = () => {
         <button
           className="btn btn-sm rounded-none float-end text-black bg-white font-mono hover:bg-gray-300 flex items-center gap-2"
           onClick={handleCanvasSubmit}
-          disabled={loading}
+          disabled={loading || !step}
         >
           {loading && (
             <svg

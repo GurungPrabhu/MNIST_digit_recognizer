@@ -1,11 +1,16 @@
 import { createContext, useContext, useState } from "react";
-import { postCanvas } from "../service";
+import { postCanvas, postFeedback } from "../service";
 
 interface DigitRecognizerContextType {
   result: any;
   loading: boolean;
+  image: string | null;
+  setImage: (image: string | null) => void;
   error: string | null;
+  feedbackLoading: boolean;
   predictDigit: (image: any) => Promise<void>;
+  submitFeedback: (feedback: number) => Promise<void>;
+  successMessage?: string | null;
 }
 
 const DigitRecognizerContext = createContext<
@@ -20,7 +25,10 @@ export const DigitRecognizerProvider = ({
 }) => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const predictDigit = async (image: string) => {
     setLoading(true);
@@ -35,9 +43,39 @@ export const DigitRecognizerProvider = ({
     }
   };
 
+  const submitFeedback = async (feedback: number) => {
+    if (!image) {
+      setError("No image to submit feedback for");
+      return;
+    }
+    setFeedbackLoading(true);
+    setError(null);
+    try {
+      await postFeedback(image, feedback);
+      setSuccessMessage("Feedback submitted successfully");
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 10000);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Feedback submission failed");
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
   return (
     <DigitRecognizerContext.Provider
-      value={{ result, loading, error, predictDigit }}
+      value={{
+        result,
+        loading,
+        error,
+        predictDigit,
+        image,
+        setImage,
+        feedbackLoading,
+        submitFeedback,
+        successMessage,
+      }}
     >
       {children}
     </DigitRecognizerContext.Provider>

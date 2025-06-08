@@ -9,7 +9,6 @@ from app.utils.image_processing import (
     crop_to_content,
     pad_to_square,
     resize_to_8x8,
-    thin_by_skeletonization,
 )
 
 # Load model (GridSearchCV)
@@ -22,21 +21,26 @@ def decode_base64_image(base64_string):
     return Image.open(io.BytesIO(image_bytes))
 
 
+def preprocess_image(image):
+    """
+    Preprocess the image by resizing, converting to grayscale, and normalizing.
+    """
+    image = decode_base64_image(image)
+    image = image.resize((32, 32)).convert("L")
+    img_array = np.array(image).astype("float32") / 255.0 * 16
+    img_array = img_array.round().astype(int)
+    img_array = crop_to_content(img_array)
+    img_array = pad_to_square(img_array, pad_value=0)
+    img_array = resize_to_8x8(img_array)
+    return img_array.reshape(1, -1)
+
+
 def predict_from_base64(base64_string):
     """
     Decodes a base64 image, preprocesses it, and predicts the digit using the trained model.
     """
     try:
-        image = decode_base64_image(base64_string)
-        image = image.resize((32, 32)).convert("L")
-        # Convert to numpy array and reshape
-        img_array = np.array(image).astype("float32") / 255.0 * 16
-
-        img_array = img_array.round().astype(int)
-        img_array = crop_to_content(img_array)
-        img_array = pad_to_square(img_array, pad_value=0)
-        img_array = resize_to_8x8(img_array)
-        img_array = img_array.reshape(1, -1)  # Flatten to [1, 64]
+        img_array = preprocess_image(base64_string)
         probabilities = model.predict_proba(img_array)
         predicted_digit = np.argmax(probabilities)
         predicted_probability = float(probabilities[0][predicted_digit])
