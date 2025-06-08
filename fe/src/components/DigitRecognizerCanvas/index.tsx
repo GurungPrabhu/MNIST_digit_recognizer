@@ -166,7 +166,7 @@ const DigitRecognizerCanvas: React.FC = () => {
       <div className="w-full h-[500px] border-2 border-gray-300 shadow-md relative bg-black rounded-none">
         <canvas
           ref={canvasRef}
-          className="w-full h-full cursor-crosshair"
+          className="w-full h-full cursor-crosshair touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={endDrawing}

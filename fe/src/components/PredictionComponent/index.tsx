@@ -54,8 +54,8 @@ const PredictionComponent: React.FC = () => {
     return <></>;
   }
   return (
-    <div className="flex flex-row justify-between">
-      <div className="flex-row pr-4">
+    <div className="flex flex-col sm:flex-row justify-between">
+      <div className="flex-row pr-4 pb-4 sm:pb-0">
         <h5 className="text-sm font-mono">Prediction</h5>
         <div className="inline-block mt-4">
           <h1 className="text-5xl font-mono inline-block">
@@ -64,9 +64,9 @@ const PredictionComponent: React.FC = () => {
           <Confidence percent={result?.confidence} />
         </div>
       </div>
-      <div className="flex border-l pl-4 ">
+      <div className="flex sm:border-l sm:pl-4 border-t-1 pt-4 sm:pt-0 sm:border-t-0">
         <fieldset className="flex items-center space-x-4 mr-6 fieldset relative min-w-[200px]">
-          <legend className="font-mono">Enter true label:</legend>
+          <legend className="font-mono">Enter true label(Feedback):</legend>
           <input
             type="number"
             value={trueLabelValue}
